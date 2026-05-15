@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.log
+
+# Local planning / private notes
+PROJECT.md
+NOTES.md
+DEVELOPMENT_NOTES.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

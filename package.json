@@ -1,0 +1,28 @@
+{
+  "name": "opspilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpsPilot modular monolith workspace",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @opspilot/api run dev",
+    "build": "npm --workspace @opspilot/api run build",
+    "lint": "npm --workspace @opspilot/api run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm --workspace @opspilot/api run test",
+    "test:watch": "npm --workspace @opspilot/api run test:watch",
+    "prisma:generate": "npm --workspace @opspilot/api run prisma:generate",
+    "prisma:migrate": "npm --workspace @opspilot/api run prisma:migrate",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
