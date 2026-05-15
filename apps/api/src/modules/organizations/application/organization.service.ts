@@ -1,6 +1,5 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../../../shared/database/prisma.js';
-import { conflict, notFound } from '../../../shared/errors/app-error.js';
+import { domainError } from '../../../shared/errors/app-error.js';
 
 const defaultPermissions = [
   'organization:read',
@@ -26,59 +25,52 @@ const defaultPermissions = [
 
 export const organizationService = {
   async create(input: { userId: string; name: string }) {
-    try {
-      return await prisma.$transaction(async (tx) => {
-        const organization = await tx.organization.create({
-          data: { name: input.name },
-        });
-
-        const member = await tx.organizationMember.create({
-          data: {
-            organizationId: organization.id,
-            userId: input.userId,
-          },
-        });
-
-        await tx.permission.createMany({
-          data: defaultPermissions.map((key) => ({ key })),
-          skipDuplicates: true,
-        });
-
-        const ownerRole = await tx.role.create({
-          data: {
-            organizationId: organization.id,
-            name: 'Owner',
-            isSystem: true,
-          },
-        });
-
-        const permissions = await tx.permission.findMany({
-          where: { key: { in: defaultPermissions } },
-          select: { id: true },
-        });
-
-        await tx.rolePermission.createMany({
-          data: permissions.map((permission) => ({
-            roleId: ownerRole.id,
-            permissionId: permission.id,
-          })),
-        });
-
-        await tx.memberRole.create({
-          data: {
-            memberId: member.id,
-            roleId: ownerRole.id,
-          },
-        });
-
-        return organization;
+    return prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.create({
+        data: { name: input.name },
       });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw conflict('Organization slug already exists');
-      }
-      throw error;
-    }
+
+      const member = await tx.organizationMember.create({
+        data: {
+          organizationId: organization.id,
+          userId: input.userId,
+        },
+      });
+
+      await tx.permission.createMany({
+        data: defaultPermissions.map((key) => ({ key })),
+        skipDuplicates: true,
+      });
+
+      const ownerRole = await tx.role.create({
+        data: {
+          organizationId: organization.id,
+          name: 'Owner',
+          isSystem: true,
+        },
+      });
+
+      const permissions = await tx.permission.findMany({
+        where: { key: { in: defaultPermissions } },
+        select: { id: true },
+      });
+
+      await tx.rolePermission.createMany({
+        data: permissions.map((permission) => ({
+          roleId: ownerRole.id,
+          permissionId: permission.id,
+        })),
+      });
+
+      await tx.memberRole.create({
+        data: {
+          memberId: member.id,
+          roleId: ownerRole.id,
+        },
+      });
+
+      return organization;
+    });
   },
 
   async listForUser(userId: string) {
@@ -113,7 +105,7 @@ export const organizationService = {
       membership.deletedAt ||
       membership.organization.deletedAt
     ) {
-      throw notFound('Organization not found');
+      throw domainError('ORGANIZATION_NOT_FOUND');
     }
 
     return membership.organization;

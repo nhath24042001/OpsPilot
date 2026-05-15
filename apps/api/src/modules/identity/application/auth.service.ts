@@ -1,8 +1,8 @@
 import argon2 from 'argon2';
 import crypto from 'node:crypto';
-import { Prisma, type PrismaClient, type User } from '@prisma/client';
+import { type PrismaClient, type User } from '@prisma/client';
 import { prisma } from '../../../shared/database/prisma.js';
-import { badRequest, conflict, unauthorized } from '../../../shared/errors/app-error.js';
+import { domainError, unauthorized } from '../../../shared/errors/app-error.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../../shared/auth/jwt.js';
 
 const refreshTokenExpiresAt = () => {
@@ -52,29 +52,22 @@ export const authService = {
   async register(input: { email: string; password: string; name?: string }) {
     const passwordHash = await argon2.hash(input.password);
 
-    try {
-      const user = await prisma.user.create({
-        data: {
-          email: input.email.toLowerCase(),
-          passwordHash,
-          name: input.name,
-        },
-      });
+    const user = await prisma.user.create({
+      data: {
+        email: input.email.toLowerCase(),
+        passwordHash,
+        name: input.name,
+      },
+    });
 
-      const tokens = await issueTokens(user);
-      return {
-        user: sanitizeUser(user),
-        tokens: {
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        },
-      };
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw conflict('Email already exists');
-      }
-      throw error;
-    }
+    const tokens = await issueTokens(user);
+    return {
+      user: sanitizeUser(user),
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+    };
   },
 
   async login(input: { email: string; password: string }) {
@@ -83,12 +76,12 @@ export const authService = {
     });
 
     if (!user?.passwordHash) {
-      throw unauthorized('Invalid credentials');
+      throw domainError('AUTH_INVALID_CREDENTIALS');
     }
 
     const validPassword = await argon2.verify(user.passwordHash, input.password);
     if (!validPassword) {
-      throw unauthorized('Invalid credentials');
+      throw domainError('AUTH_INVALID_CREDENTIALS');
     }
 
     const tokens = await issueTokens(user);
@@ -106,7 +99,7 @@ export const authService = {
     try {
       payload = verifyRefreshToken(refreshToken);
     } catch {
-      throw unauthorized('Invalid refresh token');
+      throw domainError('AUTH_INVALID_REFRESH_TOKEN');
     }
 
     return prisma.$transaction(async (tx) => {
@@ -121,7 +114,7 @@ export const authService = {
         stored.userId !== payload.sub ||
         stored.user.deletedAt
       ) {
-        throw unauthorized('Invalid refresh token');
+        throw domainError('AUTH_INVALID_REFRESH_TOKEN');
       }
 
       if (stored.revokedAt) {
@@ -134,7 +127,7 @@ export const authService = {
           data: { revokedAt: new Date() },
         });
 
-        throw unauthorized('Refresh token reuse detected');
+        throw domainError('AUTH_REFRESH_TOKEN_REUSE_DETECTED');
       }
 
       const tokens = await issueTokens(stored.user, tx, stored.familyId);
@@ -160,7 +153,7 @@ export const authService = {
 
   async logout(refreshToken: string) {
     if (!refreshToken) {
-      throw badRequest('refreshToken is required');
+      throw domainError('AUTH_REFRESH_TOKEN_REQUIRED');
     }
 
     await prisma.refreshToken.updateMany({

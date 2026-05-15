@@ -1,7 +1,9 @@
+import { errorCatalog, type ErrorCode } from './error-catalog.js';
+
 export class AppError extends Error {
   constructor(
     public readonly statusCode: number,
-    public readonly code: string,
+    public readonly code: ErrorCode,
     message: string,
     public readonly details?: unknown,
   ) {
@@ -9,14 +11,9 @@ export class AppError extends Error {
   }
 }
 
-export const badRequest = (message: string, details?: unknown) =>
-  new AppError(400, 'BAD_REQUEST', message, details);
+export const domainError = (code: ErrorCode, details?: unknown) => {
+  const definition = errorCatalog[code];
+  return new AppError(definition.statusCode, code, definition.message, details);
+};
 
-export const unauthorized = (message = 'Unauthorized') =>
-  new AppError(401, 'UNAUTHORIZED', message);
-
-export const forbidden = (message = 'Forbidden') => new AppError(403, 'FORBIDDEN', message);
-
-export const notFound = (message = 'Not found') => new AppError(404, 'NOT_FOUND', message);
-
-export const conflict = (message: string) => new AppError(409, 'CONFLICT', message);
+export const unauthorized = () => domainError('AUTH_UNAUTHORIZED');

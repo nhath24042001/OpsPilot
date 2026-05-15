@@ -14,6 +14,39 @@ The codebase is prepared for three process types:
 
 Week 1 implements the API foundation first.
 
+## API Documentation
+
+The API exposes a Swagger UI and raw OpenAPI document:
+
+```txt
+GET /docs
+GET /openapi.json
+```
+
+The OpenAPI spec is kept in code at `src/shared/openapi/openapi.ts` for the first milestone. When the API surface grows, move repeated schemas into module-owned OpenAPI fragments or generate the spec from route schemas.
+
+## Error Handling
+
+Domain errors are centralized in `src/shared/errors/error-catalog.ts`.
+
+Use:
+
+```ts
+throw domainError('AUTH_INVALID_CREDENTIALS');
+```
+
+Instead of scattering raw status codes and messages across services. This keeps API responses consistent and makes it easier to localize, document, or audit error behavior later.
+
+Prisma known errors are mapped in the global error handler through `mapPrismaError()`. For example, unique constraint errors become a standard `DATABASE_UNIQUE_CONSTRAINT` response. Route handlers should use `asyncHandler()`, so most application code does not need local `try/catch` blocks.
+
+## Password Hashing
+
+`argon2` is used to hash and verify user passwords. Passwords are never stored in plain text. Argon2 is a modern password hashing algorithm designed to be slow and memory-hard, which makes brute-force attacks more expensive than using general-purpose hashes like SHA-256.
+
+## JWT ID
+
+`jti` means JWT ID. It is a unique identifier inside a JWT payload. Refresh tokens include a random `jti` so every issued refresh token is unique even if the user ID, email, and expiration window are similar.
+
 ## Module Layout
 
 Each business module should follow this shape:

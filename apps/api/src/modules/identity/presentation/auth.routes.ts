@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../../../shared/auth/authenticate.js';
-import { badRequest } from '../../../shared/errors/app-error.js';
+import { getAuthContext } from '../../../shared/auth/auth-context.js';
 import { asyncHandler } from '../../../shared/http/async-handler.js';
 import { authService } from '../application/auth.service.js';
 import { loginSchema, logoutSchema, refreshSchema, registerSchema } from './auth.validators.js';
@@ -47,10 +47,8 @@ authRoutes.get(
   '/me',
   authenticate,
   asyncHandler(async (req, res) => {
-    if (!req.auth) {
-      throw badRequest('Missing auth context');
-    }
-    const user = await authService.me(req.auth.userId);
+    const auth = getAuthContext(req);
+    const user = await authService.me(auth.userId);
     res.status(200).json({ user });
   }),
 );

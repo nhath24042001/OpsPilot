@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../../../shared/auth/authenticate.js';
-import { badRequest } from '../../../shared/errors/app-error.js';
+import { getAuthContext } from '../../../shared/auth/auth-context.js';
 import { asyncHandler } from '../../../shared/http/async-handler.js';
 import { organizationService } from '../application/organization.service.js';
 import { createOrganizationSchema, organizationParamsSchema } from './organization.validators.js';
@@ -11,13 +11,11 @@ organizationRoutes.post(
   '/organizations',
   authenticate,
   asyncHandler(async (req, res) => {
-    if (!req.auth) {
-      throw badRequest('Missing auth context');
-    }
+    const auth = getAuthContext(req);
 
     const { body } = createOrganizationSchema.parse(req);
     const organization = await organizationService.create({
-      userId: req.auth.userId,
+      userId: auth.userId,
       name: body.name,
     });
 
@@ -29,11 +27,9 @@ organizationRoutes.get(
   '/organizations',
   authenticate,
   asyncHandler(async (req, res) => {
-    if (!req.auth) {
-      throw badRequest('Missing auth context');
-    }
+    const auth = getAuthContext(req);
 
-    const organizations = await organizationService.listForUser(req.auth.userId);
+    const organizations = await organizationService.listForUser(auth.userId);
     res.status(200).json({ organizations });
   }),
 );
@@ -42,13 +38,11 @@ organizationRoutes.get(
   '/orgs/:orgId',
   authenticate,
   asyncHandler(async (req, res) => {
-    if (!req.auth) {
-      throw badRequest('Missing auth context');
-    }
+    const auth = getAuthContext(req);
 
     const { params } = organizationParamsSchema.parse(req);
     const organization = await organizationService.getForUser({
-      userId: req.auth.userId,
+      userId: auth.userId,
       organizationId: params.orgId,
     });
 

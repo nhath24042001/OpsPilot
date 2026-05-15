@@ -33,4 +33,9 @@ npm run prisma:migrate
 npm run dev
 ```
 
-API defaults to `http://localhost:4000`.
+API defaults to `http://localhost:3000`.
+
+API docs:
+
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/openapi.json`
