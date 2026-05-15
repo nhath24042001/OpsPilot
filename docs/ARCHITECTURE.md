@@ -65,6 +65,64 @@ Prisma known errors are mapped in the global error handler through `mapPrismaErr
 
 `jti` means JWT ID. It is a unique identifier inside a JWT payload. Refresh tokens include a random `jti` so every issued refresh token is unique even if the user ID, email, and expiration window are similar.
 
+## Auth Flows
+
+### Register And Verify Email
+
+Password registration creates the user as `email_verified = false`, creates a one-time `EMAIL_VERIFICATION` token, and sends a verification email through SMTP.
+
+```txt
+POST /auth/register
+GET  /auth/verify-email?token=...
+POST /auth/resend-verification-email
+```
+
+Password login is blocked until the email is verified.
+
+### Forgot And Reset Password
+
+Forgot password always returns a generic accepted response to avoid leaking whether an email exists. If the user exists and has password auth, the system creates a one-time `PASSWORD_RESET` token and sends a reset email.
+
+```txt
+POST /auth/forgot-password
+POST /auth/reset-password
+```
+
+Resetting a password consumes the token, updates the password hash, marks the email verified, and revokes existing refresh tokens.
+
+### OAuth2
+
+OAuth2 is implemented for Google and GitHub.
+
+```txt
+GET /auth/oauth/google
+GET /auth/oauth/google/callback?code=...
+GET /auth/oauth/github
+GET /auth/oauth/github/callback?code=...
+```
+
+The authorization URL includes a signed stateless `state` generated with `OAUTH_STATE_SECRET`. The callback must return that `state`; the backend verifies provider, signature, and expiration before exchanging the code. This protects the OAuth callback from CSRF-style login attacks.
+
+The callback exchanges the authorization code for provider tokens, loads provider profile data, upserts the user, links or updates `oauth_accounts`, and issues OpsPilot access/refresh tokens. If the provider reports a verified email, the local user is marked verified.
+
+GitHub email is loaded from `/user/emails`; the backend requires a verified email and prefers the primary verified email.
+
+### Email Delivery
+
+SMTP is configured through `apps/api/.env`.
+
+```txt
+SMTP_HOST=
+SMTP_PORT=
+SMTP_SECURE=
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=
+MAIL_FROM_NAME=
+```
+
+Mailtrap works with this setup. Use your Mailtrap SMTP host, port, username, password, and a verified sender/domain in `MAIL_FROM`.
+
 ## Module Layout
 
 Each business module should follow this shape:

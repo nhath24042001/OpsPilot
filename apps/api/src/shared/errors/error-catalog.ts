@@ -7,13 +7,33 @@ export const errorCatalog = {
     statusCode: 409,
     message: 'Resource already exists',
   },
+  DATABASE_INVALID_QUERY: {
+    statusCode: 400,
+    message: 'Invalid database query input',
+  },
   AUTH_UNAUTHORIZED: {
     statusCode: 401,
     message: 'Unauthorized',
   },
-  AUTH_INVALID_CREDENTIALS: {
+  AUTH_ACCOUNT_NOT_FOUND: {
+    statusCode: 404,
+    message: 'Account not found',
+  },
+  AUTH_INVALID_PASSWORD: {
     statusCode: 401,
-    message: 'Invalid credentials',
+    message: 'Invalid password',
+  },
+  AUTH_EMAIL_NOT_VERIFIED: {
+    statusCode: 403,
+    message: 'Email verification is required',
+  },
+  AUTH_INVALID_EMAIL_VERIFICATION_TOKEN: {
+    statusCode: 400,
+    message: 'Invalid or expired email verification token',
+  },
+  AUTH_INVALID_PASSWORD_RESET_TOKEN: {
+    statusCode: 400,
+    message: 'Invalid or expired password reset token',
   },
   AUTH_INVALID_REFRESH_TOKEN: {
     statusCode: 401,
@@ -30,6 +50,22 @@ export const errorCatalog = {
   AUTH_CONTEXT_MISSING: {
     statusCode: 400,
     message: 'Missing auth context',
+  },
+  AUTH_OAUTH_PROVIDER_UNSUPPORTED: {
+    statusCode: 400,
+    message: 'Unsupported OAuth provider',
+  },
+  AUTH_OAUTH_PROVIDER_NOT_CONFIGURED: {
+    statusCode: 501,
+    message: 'OAuth provider is not configured',
+  },
+  AUTH_OAUTH_CALLBACK_FAILED: {
+    statusCode: 401,
+    message: 'OAuth callback failed',
+  },
+  AUTH_OAUTH_INVALID_STATE: {
+    statusCode: 401,
+    message: 'Invalid OAuth state',
   },
   ORGANIZATION_NOT_FOUND: {
     statusCode: 404,

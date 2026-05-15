@@ -72,6 +72,14 @@ export const openApiDocument = {
         },
         required: ['user', 'tokens'],
       },
+      RegisterResponse: {
+        type: 'object',
+        properties: {
+          user: { $ref: '#/components/schemas/User' },
+          emailVerificationSent: { type: 'boolean' },
+        },
+        required: ['user', 'emailVerificationSent'],
+      },
     },
   },
   paths: {
@@ -118,10 +126,10 @@ export const openApiDocument = {
         },
         responses: {
           '201': {
-            description: 'Registered user and issued tokens',
+            description: 'Registered user and sent verification email',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/AuthResponse' },
+                schema: { $ref: '#/components/schemas/RegisterResponse' },
               },
             },
           },
@@ -159,6 +167,95 @@ export const openApiDocument = {
             },
           },
           '401': { description: 'Invalid credentials' },
+        },
+      },
+    },
+    '/auth/verify-email': {
+      get: {
+        tags: ['Auth'],
+        summary: 'Verify email address',
+        parameters: [
+          {
+            name: 'token',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': { description: 'Email verified' },
+          '400': { description: 'Invalid or expired token' },
+        },
+      },
+    },
+    '/auth/resend-verification-email': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Resend verification email',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                },
+                required: ['email'],
+              },
+            },
+          },
+        },
+        responses: {
+          '202': { description: 'Verification email queued when eligible' },
+        },
+      },
+    },
+    '/auth/forgot-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Request password reset email',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                },
+                required: ['email'],
+              },
+            },
+          },
+        },
+        responses: {
+          '202': { description: 'Password reset email queued when eligible' },
+        },
+      },
+    },
+    '/auth/reset-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Reset password using a reset token',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  token: { type: 'string' },
+                  password: { type: 'string', minLength: 8 },
+                },
+                required: ['token', 'password'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Password reset' },
+          '400': { description: 'Invalid or expired token' },
         },
       },
     },
@@ -237,6 +334,62 @@ export const openApiDocument = {
             },
           },
           '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/auth/oauth/{provider}': {
+      get: {
+        tags: ['Auth'],
+        summary: 'Start OAuth2 login',
+        parameters: [
+          {
+            name: 'provider',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', enum: ['google', 'github'] },
+          },
+        ],
+        responses: {
+          '302': { description: 'Redirects to OAuth provider' },
+          '501': { description: 'OAuth provider is not configured' },
+        },
+      },
+    },
+    '/auth/oauth/{provider}/callback': {
+      get: {
+        tags: ['Auth'],
+        summary: 'Handle OAuth2 callback',
+        parameters: [
+          {
+            name: 'provider',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', enum: ['google', 'github'] },
+          },
+          {
+            name: 'state',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+          {
+            name: 'code',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Logged in OAuth user and issued tokens',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/AuthResponse' },
+              },
+            },
+          },
+          '401': { description: 'OAuth callback failed' },
+          '501': { description: 'OAuth provider is not configured' },
         },
       },
     },

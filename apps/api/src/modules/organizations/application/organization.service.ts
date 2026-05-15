@@ -1,5 +1,6 @@
 import { prisma } from '../../../shared/database/prisma.js';
 import { domainError } from '../../../shared/errors/app-error.js';
+import { prismaOrganizationRepository } from '../infrastructure/prisma/prisma-organization.repository.js';
 
 const defaultPermissions = [
   'organization:read',
@@ -74,40 +75,16 @@ export const organizationService = {
   },
 
   async listForUser(userId: string) {
-    const memberships = await prisma.organizationMember.findMany({
-      where: {
-        userId,
-        status: 'ACTIVE',
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-      include: { organization: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return memberships.map((membership) => membership.organization);
+    return prismaOrganizationRepository.listActiveForUser(userId);
   },
 
   async getForUser(input: { userId: string; organizationId: string }) {
-    const membership = await prisma.organizationMember.findUnique({
-      where: {
-        organizationId_userId: {
-          organizationId: input.organizationId,
-          userId: input.userId,
-        },
-      },
-      include: { organization: true },
-    });
+    const organization = await prismaOrganizationRepository.findActiveForUser(input);
 
-    if (
-      !membership ||
-      membership.status !== 'ACTIVE' ||
-      membership.deletedAt ||
-      membership.organization.deletedAt
-    ) {
+    if (!organization) {
       throw domainError('ORGANIZATION_NOT_FOUND');
     }
 
-    return membership.organization;
+    return organization;
   },
 };

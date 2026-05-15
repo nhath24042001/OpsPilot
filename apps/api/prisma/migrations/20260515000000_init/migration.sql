@@ -7,6 +7,9 @@ CREATE TYPE "OrganizationMemberStatus" AS ENUM ('ACTIVE', 'INVITED', 'DISABLED')
 -- CreateEnum
 CREATE TYPE "OAuthProvider" AS ENUM ('GOOGLE', 'GITHUB');
 
+-- CreateEnum
+CREATE TYPE "AuthTokenPurpose" AS ENUM ('EMAIL_VERIFICATION', 'PASSWORD_RESET');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -20,6 +23,19 @@ CREATE TABLE "users" (
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "auth_tokens" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "token_hash" TEXT NOT NULL,
+    "purpose" "AuthTokenPurpose" NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "consumed_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "auth_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -120,6 +136,15 @@ CREATE TABLE "member_roles" (
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "auth_tokens_token_hash_key" ON "auth_tokens"("token_hash");
+
+-- CreateIndex
+CREATE INDEX "auth_tokens_user_id_purpose_idx" ON "auth_tokens"("user_id", "purpose");
+
+-- CreateIndex
+CREATE INDEX "auth_tokens_purpose_expires_at_idx" ON "auth_tokens"("purpose", "expires_at");
+
+-- CreateIndex
 CREATE INDEX "oauth_accounts_user_id_idx" ON "oauth_accounts"("user_id");
 
 -- CreateIndex
@@ -145,6 +170,9 @@ CREATE UNIQUE INDEX "roles_organization_id_name_key" ON "roles"("organization_id
 
 -- CreateIndex
 CREATE UNIQUE INDEX "permissions_key_key" ON "permissions"("key");
+
+-- AddForeignKey
+ALTER TABLE "auth_tokens" ADD CONSTRAINT "auth_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

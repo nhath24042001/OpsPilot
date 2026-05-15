@@ -8,5 +8,15 @@ export const mapPrismaError = (error: unknown) => {
     });
   }
 
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2023') {
+    return domainError('DATABASE_INVALID_QUERY', {
+      message: error.message,
+    });
+  }
+
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    return domainError('DATABASE_INVALID_QUERY');
+  }
+
   return null;
 };

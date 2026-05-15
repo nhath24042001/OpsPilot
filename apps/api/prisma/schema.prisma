@@ -18,6 +18,11 @@ enum OAuthProvider {
   GITHUB
 }
 
+enum AuthTokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model User {
   id             String               @id @default(uuid()) @db.Uuid
   email          String               @unique
@@ -28,11 +33,27 @@ model User {
   createdAt      DateTime             @default(now()) @map("created_at")
   updatedAt      DateTime             @updatedAt @map("updated_at")
   deletedAt      DateTime?            @map("deleted_at")
+  authTokens     AuthToken[]
   refreshTokens  RefreshToken[]
   oauthAccounts  OAuthAccount[]
   memberships    OrganizationMember[]
 
   @@map("users")
+}
+
+model AuthToken {
+  id         String           @id @default(uuid()) @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  tokenHash  String           @unique @map("token_hash")
+  purpose    AuthTokenPurpose
+  expiresAt  DateTime         @map("expires_at")
+  consumedAt DateTime?        @map("consumed_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([purpose, expiresAt])
+  @@map("auth_tokens")
 }
 
 model OAuthAccount {

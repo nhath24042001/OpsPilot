@@ -8,6 +8,6 @@ export const createOrganizationSchema = z.object({
 
 export const organizationParamsSchema = z.object({
   params: z.object({
-    orgId: z.string().min(1),
+    orgId: z.string().uuid(),
   }),
 });

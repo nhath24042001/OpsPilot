@@ -42,6 +42,18 @@ API docs:
 - Swagger UI: `http://localhost:3000/docs`
 - OpenAPI JSON: `http://localhost:3000/openapi.json`
 
+Auth email delivery uses SMTP. For Mailtrap, set these values in `apps/api/.env`:
+
+```env
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=<mailtrap-user>
+SMTP_PASS=<mailtrap-password>
+MAIL_FROM=no-reply@your-verified-domain.com
+MAIL_FROM_NAME=OpsPilot
+```
+
 ## Local Infrastructure UI
 
 RabbitMQ Management:
