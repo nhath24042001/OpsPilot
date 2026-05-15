@@ -14,6 +14,24 @@ The codebase is prepared for three process types:
 
 Week 1 implements the API foundation first.
 
+## Environment Configuration
+
+Docker Compose reads infrastructure configuration from the root `.env` file.
+
+```txt
+.env
+docker-compose.yml
+```
+
+The API process reads runtime configuration from `apps/api/.env`.
+
+```txt
+apps/api/.env
+apps/api/src/shared/config/env.ts
+```
+
+Secrets, ports, image names, and service credentials should not be hard-coded in Compose or application source. Keep real values in ignored `.env` files and commit only `.env.example` templates.
+
 ## API Documentation
 
 The API exposes a Swagger UI and raw OpenAPI document:

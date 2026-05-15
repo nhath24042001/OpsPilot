@@ -1,3 +1,5 @@
+import { env } from '../config/env.js';
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -5,7 +7,7 @@ export const openApiDocument = {
     version: '0.1.0',
     description: 'Week 1 API documentation for OpsPilot backend.',
   },
-  servers: [{ url: 'http://localhost:4000' }],
+  servers: [{ url: env.API_PUBLIC_URL }],
   tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Organizations' }],
   components: {
     securitySchemes: {

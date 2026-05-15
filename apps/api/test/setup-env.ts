@@ -1,0 +1,13 @@
+process.env.NODE_ENV ??= 'test';
+process.env.PORT ??= '3000';
+process.env.API_PUBLIC_URL ??= 'http://localhost:3000';
+process.env.DATABASE_URL ??= 'postgresql://opspilot:opspilot@localhost:5432/opspilot?schema=public';
+process.env.REDIS_URL ??= 'redis://:opspilot@localhost:6379';
+process.env.RABBITMQ_URL ??= 'amqp://opspilot:opspilot@localhost:5672';
+process.env.MINIO_ENDPOINT ??= 'http://localhost:9000';
+process.env.MINIO_REGION ??= 'us-east-1';
+process.env.MINIO_ACCESS_KEY ??= 'opspilot';
+process.env.MINIO_SECRET_KEY ??= 'opspilot-secret';
+process.env.MINIO_BUCKET ??= 'opspilot';
+process.env.JWT_ACCESS_SECRET ??= 'test-access-secret-change-me';
+process.env.JWT_REFRESH_SECRET ??= 'test-refresh-secret-change-me';
