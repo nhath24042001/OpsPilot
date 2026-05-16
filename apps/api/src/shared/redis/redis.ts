@@ -18,7 +18,7 @@ export const checkRedis = async () => {
   }
 };
 
-export const closeRedis = async () => {
+export const closeRedis = () => {
   if (redis.status !== 'end') {
     redis.disconnect();
   }

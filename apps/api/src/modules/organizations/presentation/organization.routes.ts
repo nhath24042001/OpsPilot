@@ -8,9 +8,17 @@ export const organizationRoutes = Router();
 organizationRoutes.post(
   '/organizations',
   authenticate,
-  asyncHandler(organizationController.create),
+  asyncHandler(organizationController.create.bind(organizationController)),
 );
 
-organizationRoutes.get('/organizations', authenticate, asyncHandler(organizationController.list));
+organizationRoutes.get(
+  '/organizations',
+  authenticate,
+  asyncHandler(organizationController.list.bind(organizationController)),
+);
 
-organizationRoutes.get('/orgs/:orgId', authenticate, asyncHandler(organizationController.get));
+organizationRoutes.get(
+  '/orgs/:orgId',
+  authenticate,
+  asyncHandler(organizationController.get.bind(organizationController)),
+);

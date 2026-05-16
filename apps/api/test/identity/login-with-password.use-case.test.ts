@@ -8,14 +8,17 @@ import type { TokenIssuerService } from '../../src/modules/identity/application/
 vi.mock('argon2');
 
 describe('loginWithPasswordUseCase', () => {
+  const findActiveByEmail = vi.fn<UserRepository['findActiveByEmail']>();
+  const issue = vi.fn<TokenIssuerService['issue']>();
+
   const mockUserRepo = {
-    findActiveByEmail: vi.fn(),
+    findActiveByEmail,
   } as unknown as UserRepository;
 
   const mockRefreshTokenRepo = {} as unknown as RefreshTokenRepository;
 
   const mockTokenIssuer = {
-    issue: vi.fn(),
+    issue,
   } as unknown as TokenIssuerService;
 
   const useCase = createLoginWithPasswordUseCase({
@@ -36,7 +39,7 @@ describe('loginWithPasswordUseCase', () => {
   };
 
   it('throws if user not found', async () => {
-    vi.mocked(mockUserRepo.findActiveByEmail).mockResolvedValueOnce(null);
+    findActiveByEmail.mockResolvedValueOnce(null);
 
     await expect(useCase.execute({ email: 'test@example.com', password: 'pw' })).rejects.toHaveProperty(
       'code',
@@ -45,7 +48,7 @@ describe('loginWithPasswordUseCase', () => {
   });
 
   it('throws if email not verified', async () => {
-    vi.mocked(mockUserRepo.findActiveByEmail).mockResolvedValueOnce({
+    findActiveByEmail.mockResolvedValueOnce({
       ...validUser,
       emailVerified: false,
     });
@@ -57,7 +60,7 @@ describe('loginWithPasswordUseCase', () => {
   });
 
   it('throws if OAuth-only account (no password hash)', async () => {
-    vi.mocked(mockUserRepo.findActiveByEmail).mockResolvedValueOnce({
+    findActiveByEmail.mockResolvedValueOnce({
       ...validUser,
       passwordHash: null,
     });
@@ -69,7 +72,7 @@ describe('loginWithPasswordUseCase', () => {
   });
 
   it('throws on invalid password', async () => {
-    vi.mocked(mockUserRepo.findActiveByEmail).mockResolvedValueOnce(validUser);
+    findActiveByEmail.mockResolvedValueOnce(validUser);
     vi.mocked(argon2.verify).mockResolvedValueOnce(false);
 
     await expect(useCase.execute({ email: 'test@example.com', password: 'pw' })).rejects.toHaveProperty(
@@ -79,9 +82,9 @@ describe('loginWithPasswordUseCase', () => {
   });
 
   it('returns tokens on success', async () => {
-    vi.mocked(mockUserRepo.findActiveByEmail).mockResolvedValueOnce(validUser);
+    findActiveByEmail.mockResolvedValueOnce(validUser);
     vi.mocked(argon2.verify).mockResolvedValueOnce(true);
-    vi.mocked(mockTokenIssuer.issue).mockResolvedValueOnce({
+    issue.mockResolvedValueOnce({
       accessToken: 'access',
       refreshToken: 'refresh',
       storedRefreshTokenId: 'stored-1',

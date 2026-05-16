@@ -23,16 +23,16 @@ export type IdentityUseCases = {
 };
 
 export const createAuthService = (useCases: IdentityUseCases) => ({
-  getCurrentUser: useCases.getCurrentUser.execute,
-  loginWithPassword: useCases.loginWithPassword.execute,
-  register: useCases.register.execute,
-  verifyEmail: useCases.verifyEmail.execute,
-  resendVerification: useCases.resendVerification.execute,
-  forgotPassword: useCases.forgotPassword.execute,
-  resetPassword: useCases.resetPassword.execute,
-  refreshToken: useCases.refreshToken.execute,
-  logout: useCases.logout.execute,
+  getCurrentUser: useCases.getCurrentUser.execute.bind(useCases.getCurrentUser),
+  loginWithPassword: useCases.loginWithPassword.execute.bind(useCases.loginWithPassword),
+  register: useCases.register.execute.bind(useCases.register),
+  verifyEmail: useCases.verifyEmail.execute.bind(useCases.verifyEmail),
+  resendVerification: useCases.resendVerification.execute.bind(useCases.resendVerification),
+  forgotPassword: useCases.forgotPassword.execute.bind(useCases.forgotPassword),
+  resetPassword: useCases.resetPassword.execute.bind(useCases.resetPassword),
+  refreshToken: useCases.refreshToken.execute.bind(useCases.refreshToken),
+  logout: useCases.logout.execute.bind(useCases.logout),
 
-  getOAuthAuthorizationUrl: useCases.loginWithOAuth.getAuthorizationUrl,
-  loginWithOAuth: useCases.loginWithOAuth.execute,
+  getOAuthAuthorizationUrl: useCases.loginWithOAuth.getAuthorizationUrl.bind(useCases.loginWithOAuth),
+  loginWithOAuth: useCases.loginWithOAuth.execute.bind(useCases.loginWithOAuth),
 });

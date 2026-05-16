@@ -13,13 +13,16 @@ server.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, 'API server started');
 });
 
-const shutdown = async (signal: string) => {
+const shutdown = (signal: string) => {
   logger.info({ signal }, 'Shutting down API server');
-  server.close(async () => {
-    await Promise.allSettled([closePrisma(), closeRedis(), closeRabbitMq()]);
-    process.exit(0);
+  server.close(() => {
+    void (async () => {
+      closeRedis();
+      await Promise.allSettled([closePrisma(), closeRabbitMq()]);
+      process.exit(0);
+    })();
   });
 };
 
-process.on('SIGINT', () => void shutdown('SIGINT'));
-process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

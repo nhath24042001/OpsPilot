@@ -9,7 +9,7 @@ export type OrganizationUseCases = {
 };
 
 export const createOrganizationService = (useCases: OrganizationUseCases) => ({
-  create: useCases.createOrganization.execute,
-  list: useCases.listOrganizations.execute,
-  get: useCases.getOrganization.execute,
+  create: useCases.createOrganization.execute.bind(useCases.createOrganization),
+  list: useCases.listOrganizations.execute.bind(useCases.listOrganizations),
+  get: useCases.getOrganization.execute.bind(useCases.getOrganization),
 });

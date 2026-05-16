@@ -6,16 +6,20 @@ import type { EmailPort } from '../../src/modules/identity/application/ports/ema
 import { domainError } from '../../src/shared/errors/app-error.js';
 
 describe('registerUseCase', () => {
+  const createPasswordUser = vi.fn<UserRepository['createPasswordUser']>();
+  const createAndInvalidatePrevious = vi.fn<AuthTokenRepository['createAndInvalidatePrevious']>();
+  const sendVerificationEmail = vi.fn<EmailPort['sendVerificationEmail']>();
+
   const mockUserRepo = {
-    createPasswordUser: vi.fn(),
+    createPasswordUser,
   } as unknown as UserRepository;
 
   const mockAuthTokenRepo = {
-    createAndInvalidatePrevious: vi.fn(),
+    createAndInvalidatePrevious,
   } as unknown as AuthTokenRepository;
 
   const mockEmailService = {
-    sendVerificationEmail: vi.fn(),
+    sendVerificationEmail,
   } as unknown as EmailPort;
 
   const useCase = createRegisterUseCase({
@@ -26,7 +30,7 @@ describe('registerUseCase', () => {
   });
 
   it('creates user, generates token and sends email', async () => {
-    vi.mocked(mockUserRepo.createPasswordUser).mockResolvedValueOnce({
+    createPasswordUser.mockResolvedValueOnce({
       id: 'user-1',
       email: 'test@example.com',
       name: 'Test',
@@ -37,7 +41,7 @@ describe('registerUseCase', () => {
       createdAt: new Date(),
     });
 
-    vi.mocked(mockAuthTokenRepo.createAndInvalidatePrevious).mockResolvedValueOnce('mock-token');
+    createAndInvalidatePrevious.mockResolvedValueOnce('mock-token');
 
     const result = await useCase.execute({
       email: ' Test@Example.com ',
@@ -45,18 +49,18 @@ describe('registerUseCase', () => {
       name: 'Test',
     });
 
-    expect(mockUserRepo.createPasswordUser).toHaveBeenCalledWith(
+    expect(createPasswordUser).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'test@example.com',
         name: 'Test',
       }),
     );
-    expect(mockAuthTokenRepo.createAndInvalidatePrevious).toHaveBeenCalledWith({
+    expect(createAndInvalidatePrevious).toHaveBeenCalledWith({
       userId: 'user-1',
       purpose: 'EMAIL_VERIFICATION',
       ttlMinutes: 60,
     });
-    expect(mockEmailService.sendVerificationEmail).toHaveBeenCalledWith({
+    expect(sendVerificationEmail).toHaveBeenCalledWith({
       to: 'test@example.com',
       name: 'Test',
       token: 'mock-token',
@@ -66,9 +70,7 @@ describe('registerUseCase', () => {
   });
 
   it('bubbles up database unique constraint error', async () => {
-    vi.mocked(mockUserRepo.createPasswordUser).mockRejectedValueOnce(
-      domainError('DATABASE_UNIQUE_CONSTRAINT'),
-    );
+    createPasswordUser.mockRejectedValueOnce(domainError('DATABASE_UNIQUE_CONSTRAINT'));
 
     await expect(
       useCase.execute({

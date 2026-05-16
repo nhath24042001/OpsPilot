@@ -15,7 +15,9 @@ export default tseslint.config(
         ...globals.es2022,
       },
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['*.js', '*.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

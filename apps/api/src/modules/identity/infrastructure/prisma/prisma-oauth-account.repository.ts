@@ -1,6 +1,6 @@
 import { prisma } from '../../../../shared/database/prisma.js';
 import type { OAuthProviderName } from '../../domain/value-objects/oauth-provider.vo.js';
-import { OAuthProvider } from '@prisma/client';
+import type { OAuthProvider } from '@prisma/client';
 import type {
   OAuthAccountRepository,
   OAuthAccountWithUser,
