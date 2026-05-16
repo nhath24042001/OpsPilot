@@ -71,6 +71,14 @@ export const errorCatalog = {
     statusCode: 404,
     message: 'Organization not found',
   },
+  ORGANIZATION_MEMBER_NOT_FOUND: {
+    statusCode: 404,
+    message: 'Organization member not found',
+  },
+  RESOURCE_NOT_FOUND: {
+    statusCode: 404,
+    message: 'Resource not found',
+  },
   INTERNAL_SERVER_ERROR: {
     statusCode: 500,
     message: 'Internal server error',

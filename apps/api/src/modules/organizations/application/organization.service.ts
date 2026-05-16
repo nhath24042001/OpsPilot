@@ -1,90 +1,15 @@
-import { prisma } from '../../../shared/database/prisma.js';
-import { domainError } from '../../../shared/errors/app-error.js';
-import { prismaOrganizationRepository } from '../infrastructure/prisma/prisma-organization.repository.js';
+import type { createCreateOrganizationUseCase } from './use-cases/create-organization.use-case.js';
+import type { createListOrganizationsUseCase } from './use-cases/list-organizations.use-case.js';
+import type { createGetOrganizationUseCase } from './use-cases/get-organization.use-case.js';
 
-const defaultPermissions = [
-  'organization:read',
-  'member:invite',
-  'role:manage',
-  'service:create',
-  'service:read',
-  'service:update',
-  'service:delete',
-  'incident:create',
-  'incident:read',
-  'incident:update',
-  'incident:assign',
-  'incident:resolve',
-  'knowledge:create',
-  'knowledge:read',
-  'knowledge:index',
-  'knowledge:delete',
-  'ai:ask',
-  'ai:summarize',
-  'audit:read',
-];
-
-export const organizationService = {
-  async create(input: { userId: string; name: string }) {
-    return prisma.$transaction(async (tx) => {
-      const organization = await tx.organization.create({
-        data: { name: input.name },
-      });
-
-      const member = await tx.organizationMember.create({
-        data: {
-          organizationId: organization.id,
-          userId: input.userId,
-        },
-      });
-
-      await tx.permission.createMany({
-        data: defaultPermissions.map((key) => ({ key })),
-        skipDuplicates: true,
-      });
-
-      const ownerRole = await tx.role.create({
-        data: {
-          organizationId: organization.id,
-          name: 'Owner',
-          isSystem: true,
-        },
-      });
-
-      const permissions = await tx.permission.findMany({
-        where: { key: { in: defaultPermissions } },
-        select: { id: true },
-      });
-
-      await tx.rolePermission.createMany({
-        data: permissions.map((permission) => ({
-          roleId: ownerRole.id,
-          permissionId: permission.id,
-        })),
-      });
-
-      await tx.memberRole.create({
-        data: {
-          memberId: member.id,
-          roleId: ownerRole.id,
-        },
-      });
-
-      return organization;
-    });
-  },
-
-  async listForUser(userId: string) {
-    return prismaOrganizationRepository.listActiveForUser(userId);
-  },
-
-  async getForUser(input: { userId: string; organizationId: string }) {
-    const organization = await prismaOrganizationRepository.findActiveForUser(input);
-
-    if (!organization) {
-      throw domainError('ORGANIZATION_NOT_FOUND');
-    }
-
-    return organization;
-  },
+export type OrganizationUseCases = {
+  createOrganization: ReturnType<typeof createCreateOrganizationUseCase>;
+  listOrganizations: ReturnType<typeof createListOrganizationsUseCase>;
+  getOrganization: ReturnType<typeof createGetOrganizationUseCase>;
 };
+
+export const createOrganizationService = (useCases: OrganizationUseCases) => ({
+  create: useCases.createOrganization.execute,
+  list: useCases.listOrganizations.execute,
+  get: useCases.getOrganization.execute,
+});

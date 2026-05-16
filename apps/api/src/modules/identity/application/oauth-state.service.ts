@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { env } from '../../../shared/config/env.js';
 import { domainError } from '../../../shared/errors/app-error.js';
+import type { OAuthProviderName } from '../domain/value-objects/oauth-provider.vo.js';
 
-type OAuthProviderName = 'google' | 'github';
 
 type OAuthStatePayload = {
   provider: OAuthProviderName;

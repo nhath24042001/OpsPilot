@@ -1,14 +1,25 @@
 import amqp from 'amqplib';
 import { env } from '../config/env.js';
 
-let connection: Awaited<ReturnType<typeof amqp.connect>> | null = null;
+type AmqpConnection = Awaited<ReturnType<typeof amqp.connect>>;
 
-export const getRabbitMqConnection = async () => {
-  connection ??= await amqp.connect(env.RABBITMQ_URL);
+let connection: AmqpConnection | null = null;
+
+export const getRabbitMqConnection = async (): Promise<AmqpConnection> => {
+  if (connection) {
+    try {
+      const ch = await connection.createChannel();
+      await ch.close();
+      return connection;
+    } catch {
+      connection = null;
+    }
+  }
+  connection = await amqp.connect(env.RABBITMQ_URL);
   return connection;
 };
 
-export const checkRabbitMq = async () => {
+export const checkRabbitMq = async (): Promise<boolean> => {
   try {
     const conn = await getRabbitMqConnection();
     const channel = await conn.createChannel();
@@ -19,9 +30,11 @@ export const checkRabbitMq = async () => {
   }
 };
 
-export const closeRabbitMq = async () => {
+export const closeRabbitMq = async (): Promise<void> => {
   if (connection) {
-    await connection.close();
+    const conn = connection;
     connection = null;
+    await conn.close();
   }
 };
+

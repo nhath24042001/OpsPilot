@@ -8,7 +8,6 @@ coverage/
 *.log
 
 # Local planning / private notes
-PROJECT.md
 NOTES.md
 DEVELOPMENT_NOTES.md
 

@@ -1,27 +1,31 @@
 import argon2 from 'argon2';
 import { domainError } from '../../../../shared/errors/app-error.js';
 import { toPublicUser } from '../../domain/entities/auth-user.entity.js';
+import type { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository.js';
 import type { UserRepository } from '../../domain/repositories/user.repository.js';
-import { prismaUserRepository } from '../../infrastructure/prisma/prisma-user.repository.js';
-import { tokenIssuerService } from '../services/token-issuer.service.js';
+import type { TokenIssuerService } from '../services/token-issuer.service.js';
 
 type LoginWithPasswordInput = {
   email: string;
   password: string;
 };
 
-export const createLoginWithPasswordUseCase = (
-  dependencies: {
-    userRepository: UserRepository;
-  } = {
-    userRepository: prismaUserRepository,
-  },
-) => ({
+type LoginWithPasswordDeps = {
+  userRepository: UserRepository;
+  refreshTokenRepository: RefreshTokenRepository;
+  tokenIssuer: TokenIssuerService;
+};
+
+export const createLoginWithPasswordUseCase = (deps: LoginWithPasswordDeps) => ({
   async execute(input: LoginWithPasswordInput) {
-    const user = await dependencies.userRepository.findActiveByEmail(input.email.toLowerCase());
+    const user = await deps.userRepository.findActiveByEmail(input.email.toLowerCase().trim());
 
     if (!user) {
       throw domainError('AUTH_ACCOUNT_NOT_FOUND');
+    }
+
+    if (!user.emailVerified) {
+      throw domainError('AUTH_EMAIL_NOT_VERIFIED');
     }
 
     if (!user.passwordHash) {
@@ -33,11 +37,7 @@ export const createLoginWithPasswordUseCase = (
       throw domainError('AUTH_INVALID_PASSWORD');
     }
 
-    if (!user.emailVerified) {
-      throw domainError('AUTH_EMAIL_NOT_VERIFIED');
-    }
-
-    const tokens = await tokenIssuerService.issue(user);
+    const tokens = await deps.tokenIssuer.issue(user, deps.refreshTokenRepository);
 
     return {
       user: toPublicUser(user),
@@ -49,4 +49,3 @@ export const createLoginWithPasswordUseCase = (
   },
 });
 
-export const loginWithPasswordUseCase = createLoginWithPasswordUseCase();

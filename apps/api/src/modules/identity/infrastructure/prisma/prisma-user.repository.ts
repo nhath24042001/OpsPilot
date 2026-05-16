@@ -1,6 +1,7 @@
 import { prisma } from '../../../../shared/database/prisma.js';
 import type {
   CreatePasswordUserInput,
+  UpsertOAuthUserInput,
   UserRepository,
 } from '../../domain/repositories/user.repository.js';
 
@@ -30,6 +31,40 @@ export const prismaUserRepository: UserRepository = {
       where: {
         id,
         deletedAt: null,
+      },
+    });
+  },
+
+  async markEmailVerified(userId: string) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { emailVerified: true },
+    });
+  },
+
+  async updatePassword(userId: string, passwordHash: string) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        emailVerified: true,
+      },
+    });
+  },
+
+  async upsertFromOAuth(input: UpsertOAuthUserInput) {
+    return prisma.user.upsert({
+      where: { email: input.email },
+      create: {
+        email: input.email,
+        name: input.name,
+        imageUrl: input.imageUrl,
+        emailVerified: input.emailVerified,
+      },
+      update: {
+        name: input.name,
+        imageUrl: input.imageUrl,
+        emailVerified: input.emailVerified || undefined,
       },
     });
   },

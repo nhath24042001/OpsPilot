@@ -2,18 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { unauthorized } from '../errors/app-error.js';
 import { verifyAccessToken } from './jwt.js';
 
-declare global {
-  namespace Express {
-    interface Request {
-      auth?: {
-        userId: string;
-        email: string;
-      };
-    }
-  }
-}
-
-export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
   const header = req.header('authorization');
   const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : undefined;
 
@@ -30,3 +19,4 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction) =
     next(unauthorized());
   }
 };
+

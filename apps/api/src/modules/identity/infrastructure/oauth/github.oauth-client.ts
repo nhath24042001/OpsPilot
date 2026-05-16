@@ -1,5 +1,6 @@
-import { env } from '../../../shared/config/env.js';
-import { domainError } from '../../../shared/errors/app-error.js';
+import { env } from '../../../../shared/config/env.js';
+import { domainError } from '../../../../shared/errors/app-error.js';
+import type { OAuthProviderClient, OAuthProviderProfile } from '../../application/ports/oauth-provider.port.js';
 
 type GitHubTokenResponse = {
   access_token?: string;
@@ -34,8 +35,8 @@ const githubHeaders = {
   'x-github-api-version': '2022-11-28',
 };
 
-export const githubOAuthClient = {
-  provider: 'GITHUB' as const,
+export const githubOAuthClient: OAuthProviderClient = {
+  providerName: 'github',
 
   getAuthorizationUrl(state: string) {
     if (!env.OAUTH_GITHUB_CLIENT_ID || !env.OAUTH_GITHUB_CALLBACK_URL) {
@@ -51,7 +52,7 @@ export const githubOAuthClient = {
     return url.toString();
   },
 
-  async exchangeCodeForProfile(code: string) {
+  async exchangeCodeForProfile(code: string): Promise<OAuthProviderProfile> {
     if (
       !env.OAUTH_GITHUB_CLIENT_ID ||
       !env.OAUTH_GITHUB_CLIENT_SECRET ||
@@ -116,10 +117,10 @@ export const githubOAuthClient = {
       email: email.email.toLowerCase(),
       emailVerified: email.verified,
       name: user.name ?? user.login,
-      imageUrl: user.avatar_url ?? undefined,
+      imageUrl: user.avatar_url ?? null,
       accessToken: tokens.access_token,
-      refreshToken: undefined,
-      expiresAt: undefined,
+      refreshToken: null,
+      expiresAt: null,
     };
   },
 };

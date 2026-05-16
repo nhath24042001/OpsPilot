@@ -1,6 +1,8 @@
 process.env.NODE_ENV ??= 'test';
 process.env.PORT ??= '3000';
 process.env.API_PUBLIC_URL ??= 'http://localhost:3000';
+process.env.WEB_APP_URL ??= 'http://localhost:3000';
+process.env.ALLOWED_ORIGINS ??= 'http://localhost:3000';
 process.env.DATABASE_URL ??= 'postgresql://opspilot:opspilot@localhost:5432/opspilot?schema=public';
 process.env.REDIS_URL ??= 'redis://:opspilot@localhost:6379';
 process.env.RABBITMQ_URL ??= 'amqp://opspilot:opspilot@localhost:5672';

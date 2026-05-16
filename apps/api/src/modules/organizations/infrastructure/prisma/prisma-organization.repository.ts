@@ -1,7 +1,19 @@
 import { prisma } from '../../../../shared/database/prisma.js';
-import type { OrganizationRepository } from '../../domain/repositories/organization.repository.js';
+import type {
+  CreateOrganizationInput,
+  OrganizationRepository,
+} from '../../domain/repositories/organization.repository.js';
+import type { Organization } from '@prisma/client';
 
 export const prismaOrganizationRepository: OrganizationRepository = {
+  async create(input: CreateOrganizationInput) {
+    return prisma.organization.create({
+      data: {
+        name: input.name,
+      },
+    });
+  },
+
   async listActiveForUser(userId: string) {
     const memberships = await prisma.organizationMember.findMany({
       where: {
@@ -14,7 +26,7 @@ export const prismaOrganizationRepository: OrganizationRepository = {
       orderBy: { createdAt: 'desc' },
     });
 
-    return memberships.map((membership) => membership.organization);
+    return memberships.map((membership: { organization: Organization }) => membership.organization);
   },
 
   async findActiveForUser(input: { userId: string; organizationId: string }) {
@@ -32,3 +44,4 @@ export const prismaOrganizationRepository: OrganizationRepository = {
     return membership?.organization ?? null;
   },
 };
+

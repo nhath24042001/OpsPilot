@@ -1,28 +1,33 @@
-import { env } from '../../../shared/config/env.js';
-import { domainError } from '../../../shared/errors/app-error.js';
+import { env } from '../../../../shared/config/env.js';
+import { domainError } from '../../../../shared/errors/app-error.js';
+import type { OAuthProviderClient, OAuthProviderProfile } from '../../application/ports/oauth-provider.port.js';
 
 type GoogleTokenResponse = {
-  access_token: string;
+  access_token?: string;
   refresh_token?: string;
   expires_in?: number;
-  token_type: string;
+  scope?: string;
+  token_type?: string;
   id_token?: string;
+  error?: string;
 };
 
-type GoogleUserInfo = {
+type GoogleUserInfoResponse = {
   sub: string;
+  name: string;
+  given_name: string;
+  family_name: string;
+  picture: string;
   email: string;
-  email_verified?: boolean;
-  name?: string;
-  picture?: string;
+  email_verified: boolean;
 };
 
 const googleAuthorizeUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
 const googleTokenUrl = 'https://oauth2.googleapis.com/token';
 const googleUserInfoUrl = 'https://openidconnect.googleapis.com/v1/userinfo';
 
-export const googleOAuthClient = {
-  provider: 'GOOGLE' as const,
+export const googleOAuthClient: OAuthProviderClient = {
+  providerName: 'google',
 
   getAuthorizationUrl(state: string) {
     if (!env.OAUTH_GOOGLE_CLIENT_ID || !env.OAUTH_GOOGLE_CALLBACK_URL) {
@@ -41,7 +46,7 @@ export const googleOAuthClient = {
     return url.toString();
   },
 
-  async exchangeCodeForProfile(code: string) {
+  async exchangeCodeForProfile(code: string): Promise<OAuthProviderProfile> {
     if (
       !env.OAUTH_GOOGLE_CLIENT_ID ||
       !env.OAUTH_GOOGLE_CLIENT_SECRET ||
@@ -52,7 +57,9 @@ export const googleOAuthClient = {
 
     const tokenResponse = await fetch(googleTokenUrl, {
       method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+      },
       body: new URLSearchParams({
         code,
         client_id: env.OAUTH_GOOGLE_CLIENT_ID,
@@ -67,28 +74,35 @@ export const googleOAuthClient = {
     }
 
     const tokens = (await tokenResponse.json()) as GoogleTokenResponse;
+    if (!tokens.access_token || tokens.error) {
+      throw domainError('AUTH_OAUTH_CALLBACK_FAILED');
+    }
 
-    const profileResponse = await fetch(googleUserInfoUrl, {
+    const userResponse = await fetch(googleUserInfoUrl, {
       headers: {
         authorization: `Bearer ${tokens.access_token}`,
       },
     });
 
-    if (!profileResponse.ok) {
+    if (!userResponse.ok) {
       throw domainError('AUTH_OAUTH_CALLBACK_FAILED');
     }
 
-    const profile = (await profileResponse.json()) as GoogleUserInfo;
+    const user = (await userResponse.json()) as GoogleUserInfoResponse;
+
+    const expiresAt = tokens.expires_in
+      ? new Date(Date.now() + tokens.expires_in * 1000)
+      : null;
 
     return {
-      providerAccountId: profile.sub,
-      email: profile.email.toLowerCase(),
-      emailVerified: Boolean(profile.email_verified),
-      name: profile.name,
-      imageUrl: profile.picture,
+      providerAccountId: user.sub,
+      email: user.email.toLowerCase(),
+      emailVerified: user.email_verified,
+      name: user.name,
+      imageUrl: user.picture ?? null,
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : undefined,
+      refreshToken: tokens.refresh_token ?? null,
+      expiresAt,
     };
   },
 };

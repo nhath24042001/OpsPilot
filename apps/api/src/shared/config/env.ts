@@ -7,6 +7,10 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default('info'),
   API_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
   WEB_APP_URL: z.string().url().default('http://localhost:3000'),
+  ALLOWED_ORIGINS: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((v) => v.split(',').map((s) => s.trim())),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
   RABBITMQ_URL: z.string().min(1),
@@ -19,6 +23,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('30d'),
+  JWT_REFRESH_TTL_SECONDS: z.coerce.number().int().positive().default(2592000),
   EMAIL_VERIFICATION_TTL_MINUTES: z.coerce.number().int().positive().default(60),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(15),
   SMTP_HOST: z.string().min(1),
