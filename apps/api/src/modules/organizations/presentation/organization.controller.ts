@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import { getAuthContext } from '../../../shared/auth/auth-context.js';
+import { getTenantContext } from '../../access-control/presentation/tenant-context.js';
 import { organizationsModule } from '../organizations.module.js';
-import { createOrganizationSchema, organizationParamsSchema } from './organization.validators.js';
+import { createOrganizationSchema } from './organization.validators.js';
 
 export const organizationController = {
   async create(req: Request, res: Response) {
@@ -24,11 +25,11 @@ export const organizationController = {
 
   async get(req: Request, res: Response) {
     const auth = getAuthContext(req);
-    const { params } = organizationParamsSchema.parse(req);
+    const tenant = getTenantContext(req);
 
     const { organization } = await organizationsModule.organizationService.get({
       userId: auth.userId,
-      organizationId: params.orgId,
+      organizationId: tenant.organizationId,
     });
 
     res.status(200).json({ organization });

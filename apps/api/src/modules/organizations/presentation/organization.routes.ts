@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../../../shared/auth/authenticate.js';
 import { asyncHandler } from '../../../shared/http/async-handler.js';
+import { authorize, resolveTenant } from '../../access-control/presentation/tenant-middleware.js';
 import { organizationController } from './organization.controller.js';
 
 export const organizationRoutes = Router();
@@ -20,5 +21,7 @@ organizationRoutes.get(
 organizationRoutes.get(
   '/orgs/:orgId',
   authenticate,
+  asyncHandler(resolveTenant),
+  authorize('organization:read'),
   asyncHandler(organizationController.get.bind(organizationController)),
 );

@@ -1,10 +1,3 @@
-export const DEFAULT_PERMISSIONS = [
-  'organization:read',
-  'organization:update',
-  'organization:delete',
-  'member:read',
-  'member:invite',
-  'member:remove',
-] as const;
+export { PERMISSIONS as DEFAULT_PERMISSIONS } from '../../../access-control/domain/value-objects/permission.vo.js';
 
-export type Permission = (typeof DEFAULT_PERMISSIONS)[number];
+export type { Permission } from '../../../access-control/domain/value-objects/permission.vo.js';

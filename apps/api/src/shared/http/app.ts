@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
+import { accessControlRoutes } from '../../modules/access-control/presentation/access-control.routes.js';
 import { authRoutes } from '../../modules/identity/presentation/auth.routes.js';
 import { organizationRoutes } from '../../modules/organizations/presentation/organization.routes.js';
 import { env } from '../config/env.js';
@@ -23,6 +24,7 @@ export const createApp = () => {
   app.use(healthRoutes);
   app.use('/auth', authRoutes);
   app.use(organizationRoutes);
+  app.use(accessControlRoutes);
 
   app.use(errorHandler);
 

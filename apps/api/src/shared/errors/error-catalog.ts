@@ -75,6 +75,10 @@ export const errorCatalog = {
     statusCode: 404,
     message: 'Organization member not found',
   },
+  RBAC_FORBIDDEN: {
+    statusCode: 403,
+    message: 'Permission denied',
+  },
   RESOURCE_NOT_FOUND: {
     statusCode: 404,
     message: 'Resource not found',

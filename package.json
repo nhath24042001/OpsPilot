@@ -16,6 +16,7 @@
     "test:watch": "npm --workspace @opspilot/api run test:watch",
     "prisma:generate": "npm --workspace @opspilot/api run prisma:generate",
     "prisma:migrate": "npm --workspace @opspilot/api run prisma:migrate",
+    "prisma:studio": "npm --workspace @opspilot/api run prisma:studio",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   },
