@@ -75,6 +75,18 @@ export const errorCatalog = {
     statusCode: 404,
     message: 'Organization member not found',
   },
+  SERVICE_NOT_FOUND: {
+    statusCode: 404,
+    message: 'Service not found',
+  },
+  INCIDENT_NOT_FOUND: {
+    statusCode: 404,
+    message: 'Incident not found',
+  },
+  INCIDENT_INVALID_TRANSITION: {
+    statusCode: 409,
+    message: 'Invalid incident state transition',
+  },
   RBAC_FORBIDDEN: {
     statusCode: 403,
     message: 'Permission denied',
