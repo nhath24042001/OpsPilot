@@ -1,18 +1,15 @@
 import { domainError } from '../../../../shared/errors/app-error.js';
-import type { IncidentRepository } from '../../domain/repositories/incident.repository.js';
+import type {
+  AssignIncidentInput,
+  IncidentRepository,
+} from '../../domain/repositories/incident.repository.js';
 
 type Deps = {
   incidentRepository: IncidentRepository;
 };
 
-type Input = {
-  organizationId: string;
-  incidentId: string;
-  assignedMemberId: string;
-};
-
 export const createAssignIncidentUseCase = (deps: Deps) => ({
-  async execute(input: Input) {
+  async execute(input: AssignIncidentInput) {
     const incident = await deps.incidentRepository.findActive(input);
     if (!incident) {
       throw domainError('INCIDENT_NOT_FOUND');

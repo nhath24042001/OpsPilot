@@ -42,6 +42,22 @@ enum IncidentSeverity {
   SEV4
 }
 
+enum IncidentTimelineEventType {
+  INCIDENT_CREATED
+  INCIDENT_ACKNOWLEDGED
+  INCIDENT_ASSIGNED
+  INCIDENT_RESOLVED
+  INCIDENT_CANCELED
+  COMMENT_ADDED
+}
+
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+}
+
 model User {
   id             String               @id @default(uuid()) @db.Uuid
   email          String               @unique
@@ -141,6 +157,8 @@ model OrganizationMember {
   ownedServices  Service[]                @relation("ServiceOwner")
   commandedIncidents Incident[]           @relation("IncidentCommander")
   assignedIncidents  Incident[]           @relation("IncidentAssignee")
+  timelineEvents IncidentTimelineEvent[]   @relation("TimelineActor")
+  comments       IncidentComment[]         @relation("CommentAuthor")
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -233,9 +251,73 @@ model Incident {
   service           Service?            @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   commanderMember   OrganizationMember? @relation("IncidentCommander", fields: [commanderMemberId], references: [id], onDelete: SetNull)
   assignedMember    OrganizationMember? @relation("IncidentAssignee", fields: [assignedMemberId], references: [id], onDelete: SetNull)
+  timelineEvents    IncidentTimelineEvent[]
+  comments          IncidentComment[]
 
   @@index([organizationId, status, createdAt])
   @@index([organizationId, severity, createdAt])
   @@index([organizationId, serviceId, createdAt])
   @@map("incidents")
+}
+
+model IncidentTimelineEvent {
+  id             String                    @id @default(uuid()) @db.Uuid
+  organizationId String                    @map("organization_id") @db.Uuid
+  incidentId     String                    @map("incident_id") @db.Uuid
+  actorMemberId  String?                   @map("actor_member_id") @db.Uuid
+  type           IncidentTimelineEventType
+  message        String?
+  metadata       Json                      @default("{}")
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  incident       Incident                  @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  actorMember    OrganizationMember?       @relation("TimelineActor", fields: [actorMemberId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, incidentId, createdAt])
+  @@map("incident_timeline_events")
+}
+
+model IncidentComment {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  incidentId     String              @map("incident_id") @db.Uuid
+  authorMemberId String              @map("author_member_id") @db.Uuid
+  body           String
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  deletedAt      DateTime?           @map("deleted_at")
+  incident       Incident            @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  authorMember   OrganizationMember  @relation("CommentAuthor", fields: [authorMemberId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, incidentId, createdAt])
+  @@map("incident_comments")
+}
+
+model OutboxEvent {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String?           @map("organization_id") @db.Uuid
+  aggregateType  String            @map("aggregate_type")
+  aggregateId    String            @map("aggregate_id") @db.Uuid
+  eventType      String            @map("event_type")
+  routingKey     String            @map("routing_key")
+  payload        Json
+  status         OutboxEventStatus @default(PENDING)
+  attempts       Int               @default(0)
+  availableAt    DateTime          @default(now()) @map("available_at")
+  publishedAt    DateTime?         @map("published_at")
+  lastError      String?           @map("last_error")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_events")
+}
+
+model ProcessedMessage {
+  messageId    String   @map("message_id")
+  consumerName String   @map("consumer_name")
+  processedAt  DateTime @default(now()) @map("processed_at")
+
+  @@id([messageId, consumerName])
+  @@map("processed_messages")
 }

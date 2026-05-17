@@ -29,6 +29,7 @@ describe('incident use cases', () => {
   const incidentId = '22222222-2222-2222-2222-222222222222';
   const memberId = '33333333-3333-3333-3333-333333333333';
   const serviceId = '44444444-4444-4444-4444-444444444444';
+  const actorMemberId = '55555555-5555-5555-5555-555555555555';
 
   const incident = (overrides: Partial<IncidentEntity> = {}): IncidentEntity => ({
     id: incidentId,
@@ -63,6 +64,7 @@ describe('incident use cases', () => {
     const useCase = createCreateIncidentUseCase({ incidentRepository });
     const result = await useCase.execute({
       organizationId,
+      actorMemberId,
       serviceId,
       assignedMemberId: memberId,
       title: 'Checkout is failing',
@@ -80,6 +82,7 @@ describe('incident use cases', () => {
     await expect(
       useCase.execute({
         organizationId,
+        actorMemberId,
         title: 'Region outage',
         severity: 'SEV1',
       }),
@@ -93,9 +96,9 @@ describe('incident use cases', () => {
     acknowledge.mockResolvedValueOnce(incident({ status: 'ACKNOWLEDGED' }));
 
     const useCase = createAcknowledgeIncidentUseCase({ incidentRepository });
-    const result = await useCase.execute({ organizationId, incidentId });
+    const result = await useCase.execute({ organizationId, incidentId, actorMemberId });
 
-    expect(acknowledge).toHaveBeenCalledWith({ organizationId, incidentId });
+    expect(acknowledge).toHaveBeenCalledWith({ organizationId, incidentId, actorMemberId });
     expect(result.incident.status).toBe('ACKNOWLEDGED');
   });
 
@@ -103,7 +106,7 @@ describe('incident use cases', () => {
     findActive.mockResolvedValueOnce(incident({ status: 'RESOLVED' }));
     const useCase = createAcknowledgeIncidentUseCase({ incidentRepository });
 
-    await expect(useCase.execute({ organizationId, incidentId })).rejects.toHaveProperty(
+    await expect(useCase.execute({ organizationId, incidentId, actorMemberId })).rejects.toHaveProperty(
       'code',
       'INCIDENT_INVALID_TRANSITION',
     );
@@ -116,7 +119,7 @@ describe('incident use cases', () => {
     const useCase = createAssignIncidentUseCase({ incidentRepository });
 
     await expect(
-      useCase.execute({ organizationId, incidentId, assignedMemberId: memberId }),
+      useCase.execute({ organizationId, incidentId, actorMemberId, assignedMemberId: memberId }),
     ).rejects.toHaveProperty('code', 'INCIDENT_INVALID_TRANSITION');
 
     expect(assign).not.toHaveBeenCalled();
@@ -136,6 +139,7 @@ describe('incident use cases', () => {
     const result = await useCase.execute({
       organizationId,
       incidentId,
+      actorMemberId,
       rootCause: 'Queue saturation',
       resolution: 'Scaled workers',
     });
@@ -143,6 +147,7 @@ describe('incident use cases', () => {
     expect(resolve).toHaveBeenCalledWith({
       organizationId,
       incidentId,
+      actorMemberId,
       rootCause: 'Queue saturation',
       resolution: 'Scaled workers',
     });

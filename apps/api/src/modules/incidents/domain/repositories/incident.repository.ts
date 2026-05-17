@@ -10,6 +10,7 @@ export type IncidentListFilters = CursorPageInput & {
 
 export type CreateIncidentInput = {
   organizationId: string;
+  actorMemberId: string;
   serviceId?: string | null;
   commanderMemberId?: string | null;
   assignedMemberId?: string | null;
@@ -21,24 +22,32 @@ export type CreateIncidentInput = {
 export type AssignIncidentInput = {
   organizationId: string;
   incidentId: string;
+  actorMemberId: string;
   assignedMemberId: string;
 };
 
 export type ResolveIncidentInput = {
   organizationId: string;
   incidentId: string;
+  actorMemberId: string;
   rootCause: string;
   resolution: string;
+};
+
+export type IncidentActionInput = {
+  organizationId: string;
+  incidentId: string;
+  actorMemberId: string;
 };
 
 export interface IncidentRepository {
   create(input: CreateIncidentInput): Promise<IncidentEntity>;
   list(organizationId: string, filters: IncidentListFilters): Promise<CursorPage<IncidentEntity>>;
   findActive(input: { organizationId: string; incidentId: string }): Promise<IncidentEntity | null>;
-  acknowledge(input: { organizationId: string; incidentId: string }): Promise<IncidentEntity>;
+  acknowledge(input: IncidentActionInput): Promise<IncidentEntity>;
   assign(input: AssignIncidentInput): Promise<IncidentEntity>;
   resolve(input: ResolveIncidentInput): Promise<IncidentEntity>;
-  cancel(input: { organizationId: string; incidentId: string }): Promise<IncidentEntity>;
+  cancel(input: IncidentActionInput): Promise<IncidentEntity>;
   memberExists(input: { organizationId: string; memberId: string }): Promise<boolean>;
   serviceExists(input: { organizationId: string; serviceId: string }): Promise<boolean>;
 }

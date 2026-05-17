@@ -5,10 +5,17 @@ export const openApiDocument = {
   info: {
     title: 'OpsPilot API',
     version: '0.1.0',
-    description: 'Week 1 API documentation for OpsPilot backend.',
+    description: 'OpsPilot backend API documentation.',
   },
   servers: [{ url: env.API_PUBLIC_URL }],
-  tags: [{ name: 'Health' }, { name: 'Auth' }, { name: 'Organizations' }],
+  tags: [
+    { name: 'Health' },
+    { name: 'Auth' },
+    { name: 'Organizations' },
+    { name: 'Service Catalog' },
+    { name: 'Incidents' },
+    { name: 'Incident Timeline' },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: {

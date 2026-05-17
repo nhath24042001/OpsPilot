@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import { getAuthContext } from '../../../shared/auth/auth-context.js';

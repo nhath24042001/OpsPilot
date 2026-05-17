@@ -15,6 +15,7 @@ export const incidentController = {
     const { body } = createIncidentSchema.parse(req);
     const result = await incidentsModule.incidentService.create({
       organizationId: tenant.organizationId,
+      actorMemberId: tenant.memberId,
       serviceId: body.serviceId,
       commanderMemberId: body.commanderMemberId,
       assignedMemberId: body.assignedMemberId,
@@ -51,6 +52,7 @@ export const incidentController = {
     const result = await incidentsModule.incidentService.acknowledge({
       organizationId: tenant.organizationId,
       incidentId: params.incidentId,
+      actorMemberId: tenant.memberId,
     });
 
     res.status(200).json(result);
@@ -62,6 +64,7 @@ export const incidentController = {
     const result = await incidentsModule.incidentService.assign({
       organizationId: tenant.organizationId,
       incidentId: params.incidentId,
+      actorMemberId: tenant.memberId,
       assignedMemberId: body.assignedMemberId,
     });
 
@@ -74,6 +77,7 @@ export const incidentController = {
     const result = await incidentsModule.incidentService.resolve({
       organizationId: tenant.organizationId,
       incidentId: params.incidentId,
+      actorMemberId: tenant.memberId,
       rootCause: body.rootCause,
       resolution: body.resolution,
     });
@@ -87,6 +91,7 @@ export const incidentController = {
     const result = await incidentsModule.incidentService.cancel({
       organizationId: tenant.organizationId,
       incidentId: params.incidentId,
+      actorMemberId: tenant.memberId,
     });
 
     res.status(200).json(result);
