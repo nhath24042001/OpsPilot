@@ -71,6 +71,11 @@ enum KnowledgeDocumentStatus {
   INDEX_FAILED
 }
 
+enum AssistantMessageRole {
+  USER
+  ASSISTANT
+}
+
 model User {
   id             String               @id @default(uuid()) @db.Uuid
   email          String               @unique
@@ -85,6 +90,8 @@ model User {
   refreshTokens  RefreshToken[]
   oauthAccounts  OAuthAccount[]
   memberships    OrganizationMember[]
+  assistantConversations AssistantConversation[]
+  generatedPostmortems Postmortem[]
 
   @@map("users")
 }
@@ -155,6 +162,8 @@ model Organization {
   files       File[]
   knowledgeDocuments KnowledgeDocument[]
   knowledgeChunks KnowledgeChunk[]
+  assistantConversations AssistantConversation[]
+  postmortems Postmortem[]
 
   @@map("organizations")
 }
@@ -271,6 +280,7 @@ model Incident {
   assignedMember    OrganizationMember? @relation("IncidentAssignee", fields: [assignedMemberId], references: [id], onDelete: SetNull)
   timelineEvents    IncidentTimelineEvent[]
   comments          IncidentComment[]
+  postmortem        Postmortem?
 
   @@index([organizationId, status, createdAt])
   @@index([organizationId, severity, createdAt])
@@ -395,4 +405,49 @@ model KnowledgeChunk {
   @@unique([documentId, chunkIndex])
   @@index([organizationId, documentId])
   @@map("knowledge_chunks")
+}
+
+model AssistantConversation {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  userId         String             @map("user_id") @db.Uuid
+  question       String
+  answer         String
+  sources        Json               @default("[]")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       AssistantMessage[]
+
+  @@index([organizationId, createdAt])
+  @@map("assistant_conversations")
+}
+
+model AssistantMessage {
+  id             String                @id @default(uuid()) @db.Uuid
+  conversationId String                @map("conversation_id") @db.Uuid
+  role           AssistantMessageRole
+  content        String
+  createdAt      DateTime              @default(now()) @map("created_at")
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
+}
+
+model Postmortem {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  incidentId     String       @unique @map("incident_id") @db.Uuid
+  generatedByUserId String    @map("generated_by_user_id") @db.Uuid
+  title          String
+  content        String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  incident       Incident     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  generatedBy    User         @relation(fields: [generatedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("postmortems")
 }

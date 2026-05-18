@@ -91,6 +91,10 @@ export const errorCatalog = {
     statusCode: 403,
     message: 'Permission denied',
   },
+  RATE_LIMIT_EXCEEDED: {
+    statusCode: 429,
+    message: 'Rate limit exceeded',
+  },
   RESOURCE_NOT_FOUND: {
     statusCode: 404,
     message: 'Resource not found',

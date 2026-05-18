@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { accessControlRoutes } from '../../modules/access-control/presentation/access-control.routes.js';
+import { aiAssistantRoutes } from '../../modules/ai-assistant/presentation/ai-assistant.routes.js';
 import { authRoutes } from '../../modules/identity/presentation/auth.routes.js';
 import { incidentTimelineRoutes } from '../../modules/incident-timeline/presentation/incident-timeline.routes.js';
 import { incidentRoutes } from '../../modules/incidents/presentation/incident.routes.js';
@@ -33,6 +34,7 @@ export const createApp = () => {
   app.use(incidentRoutes);
   app.use(incidentTimelineRoutes);
   app.use(knowledgeBaseRoutes);
+  app.use(aiAssistantRoutes);
 
   app.use(errorHandler);
 
