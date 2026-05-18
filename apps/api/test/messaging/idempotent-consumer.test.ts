@@ -19,10 +19,11 @@ describe('idempotent consumer', () => {
       .fn<ProcessedMessageRepository['tryStart']>()
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
+    const clear = vi.fn<ProcessedMessageRepository['clear']>().mockResolvedValue(undefined);
     const handler = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const consumer = createIdempotentConsumer({
       consumerName: 'test-consumer',
-      processedMessageRepository: { tryStart },
+      processedMessageRepository: { tryStart, clear },
       handler,
     });
 
@@ -31,5 +32,24 @@ describe('idempotent consumer', () => {
 
     expect(tryStart).toHaveBeenCalledTimes(2);
     expect(handler).toHaveBeenCalledTimes(1);
+    expect(clear).not.toHaveBeenCalled();
+  });
+
+  it('clears the processed marker when handling fails so RabbitMQ can retry', async () => {
+    const tryStart = vi.fn<ProcessedMessageRepository['tryStart']>().mockResolvedValueOnce(true);
+    const clear = vi.fn<ProcessedMessageRepository['clear']>().mockResolvedValue(undefined);
+    const handler = vi.fn<() => Promise<void>>().mockRejectedValue(new Error('handler failed'));
+    const consumer = createIdempotentConsumer({
+      consumerName: 'test-consumer',
+      processedMessageRepository: { tryStart, clear },
+      handler,
+    });
+
+    await expect(consumer(message)).rejects.toThrow('handler failed');
+
+    expect(clear).toHaveBeenCalledWith({
+      messageId: message.messageId,
+      consumerName: 'test-consumer',
+    });
   });
 });

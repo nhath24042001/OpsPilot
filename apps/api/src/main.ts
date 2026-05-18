@@ -5,6 +5,7 @@ import { logger } from './shared/logger/logger.js';
 import { closePrisma } from './shared/database/prisma.js';
 import { closeRedis } from './shared/redis/redis.js';
 import { closeRabbitMq } from './shared/rabbitmq/rabbitmq.js';
+import { startDocumentIndexingConsumer } from './shared/messaging/document-indexing.consumer.js';
 import { startWebsocketBroadcastConsumer } from './shared/messaging/websocket-broadcast.consumer.js';
 import { rabbitMqEventPublisher } from './shared/messaging/rabbitmq-publisher.js';
 import { createOutboxPublisherService } from './shared/outbox/outbox-publisher.service.js';
@@ -28,6 +29,7 @@ const outboxInterval = setInterval(() => {
 }, 5000);
 
 let closeWebsocketConsumer: (() => Promise<void>) | null = null;
+let closeDocumentIndexingConsumer: (() => Promise<void>) | null = null;
 
 void startWebsocketBroadcastConsumer()
   .then((closeConsumer) => {
@@ -35,6 +37,14 @@ void startWebsocketBroadcastConsumer()
   })
   .catch((error: unknown) => {
     logger.error({ err: error }, 'Failed to start websocket broadcast consumer');
+  });
+
+void startDocumentIndexingConsumer()
+  .then((closeConsumer) => {
+    closeDocumentIndexingConsumer = closeConsumer;
+  })
+  .catch((error: unknown) => {
+    logger.error({ err: error }, 'Failed to start document indexing consumer');
   });
 
 server.listen(env.PORT, () => {
@@ -49,6 +59,7 @@ const shutdown = (signal: string) => {
       closeRedis();
       await Promise.allSettled([
         closeWebsocketConsumer?.() ?? Promise.resolve(),
+        closeDocumentIndexingConsumer?.() ?? Promise.resolve(),
         closeIncidentWebSocketServer(),
         closePrisma(),
         closeRabbitMq(),

@@ -11,15 +11,21 @@ type Deps = {
 
 export const createIdempotentConsumer = (deps: Deps): Handler => {
   return async (message) => {
-    const shouldProcess = await deps.processedMessageRepository.tryStart({
+    const processedMessage = {
       messageId: message.messageId,
       consumerName: deps.consumerName,
-    });
+    };
+    const shouldProcess = await deps.processedMessageRepository.tryStart(processedMessage);
 
     if (!shouldProcess) {
       return;
     }
 
-    await deps.handler(message);
+    try {
+      await deps.handler(message);
+    } catch (error) {
+      await deps.processedMessageRepository.clear(processedMessage);
+      throw error;
+    }
   };
 };

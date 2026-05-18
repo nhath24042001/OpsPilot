@@ -6,6 +6,7 @@ import { accessControlRoutes } from '../../modules/access-control/presentation/a
 import { authRoutes } from '../../modules/identity/presentation/auth.routes.js';
 import { incidentTimelineRoutes } from '../../modules/incident-timeline/presentation/incident-timeline.routes.js';
 import { incidentRoutes } from '../../modules/incidents/presentation/incident.routes.js';
+import { knowledgeBaseRoutes } from '../../modules/knowledge-base/presentation/knowledge-base.routes.js';
 import { organizationRoutes } from '../../modules/organizations/presentation/organization.routes.js';
 import { serviceCatalogRoutes } from '../../modules/service-catalog/presentation/service-catalog.routes.js';
 import { env } from '../config/env.js';
@@ -31,6 +32,7 @@ export const createApp = () => {
   app.use(serviceCatalogRoutes);
   app.use(incidentRoutes);
   app.use(incidentTimelineRoutes);
+  app.use(knowledgeBaseRoutes);
 
   app.use(errorHandler);
 

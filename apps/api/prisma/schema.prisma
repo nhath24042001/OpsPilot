@@ -58,6 +58,19 @@ enum OutboxEventStatus {
   FAILED
 }
 
+enum FileUploadStatus {
+  PENDING_UPLOAD
+  UPLOADED
+}
+
+enum KnowledgeDocumentStatus {
+  PENDING_UPLOAD
+  PENDING_INDEX
+  INDEXING
+  INDEXED
+  INDEX_FAILED
+}
+
 model User {
   id             String               @id @default(uuid()) @db.Uuid
   email          String               @unique
@@ -139,6 +152,9 @@ model Organization {
   roles       Role[]
   services    Service[]
   incidents   Incident[]
+  files       File[]
+  knowledgeDocuments KnowledgeDocument[]
+  knowledgeChunks KnowledgeChunk[]
 
   @@map("organizations")
 }
@@ -159,6 +175,8 @@ model OrganizationMember {
   assignedIncidents  Incident[]           @relation("IncidentAssignee")
   timelineEvents IncidentTimelineEvent[]   @relation("TimelineActor")
   comments       IncidentComment[]         @relation("CommentAuthor")
+  files          File[]                    @relation("FileCreator")
+  knowledgeDocuments KnowledgeDocument[]   @relation("KnowledgeDocumentCreator")
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -320,4 +338,61 @@ model ProcessedMessage {
 
   @@id([messageId, consumerName])
   @@map("processed_messages")
+}
+
+model File {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  objectKey      String           @unique @map("object_key")
+  originalName   String           @map("original_name")
+  contentType    String           @map("content_type")
+  byteSize       BigInt           @map("byte_size")
+  status         FileUploadStatus @default(PENDING_UPLOAD)
+  createdByMemberId String        @map("created_by_member_id") @db.Uuid
+  uploadedAt     DateTime?        @map("uploaded_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdByMember OrganizationMember @relation("FileCreator", fields: [createdByMemberId], references: [id], onDelete: Cascade)
+  knowledgeDocument KnowledgeDocument?
+
+  @@index([organizationId, status, createdAt])
+  @@map("files")
+}
+
+model KnowledgeDocument {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  fileId         String                  @unique @map("file_id") @db.Uuid
+  title          String
+  status         KnowledgeDocumentStatus @default(PENDING_INDEX)
+  indexError     String?                 @map("index_error")
+  indexedAt      DateTime?               @map("indexed_at")
+  createdByMemberId String               @map("created_by_member_id") @db.Uuid
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  file           File                    @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdByMember OrganizationMember     @relation("KnowledgeDocumentCreator", fields: [createdByMemberId], references: [id], onDelete: Cascade)
+  chunks         KnowledgeChunk[]
+
+  @@index([organizationId, status, createdAt])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  documentId     String            @map("document_id") @db.Uuid
+  chunkIndex     Int               @map("chunk_index")
+  content        String
+  tokenCount     Int               @map("token_count")
+  embedding      Unsupported("vector(8)")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  document       KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
+  @@index([organizationId, documentId])
+  @@map("knowledge_chunks")
 }

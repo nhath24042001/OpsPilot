@@ -3,6 +3,7 @@ import { prisma } from '../database/prisma.js';
 
 export interface ProcessedMessageRepository {
   tryStart(input: { messageId: string; consumerName: string }): Promise<boolean>;
+  clear(input: { messageId: string; consumerName: string }): Promise<void>;
 }
 
 export const prismaProcessedMessageRepository: ProcessedMessageRepository = {
@@ -22,5 +23,14 @@ export const prismaProcessedMessageRepository: ProcessedMessageRepository = {
 
       throw error;
     }
+  },
+
+  async clear(input) {
+    await prisma.processedMessage.deleteMany({
+      where: {
+        messageId: input.messageId,
+        consumerName: input.consumerName,
+      },
+    });
   },
 };
